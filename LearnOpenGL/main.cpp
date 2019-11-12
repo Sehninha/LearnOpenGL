@@ -1,3 +1,6 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
 #include <iostream>
@@ -54,10 +57,10 @@ int main()
 
 	// Triangle Vertices
 	float vertices[] = {
-		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-		-0.5f, 0.5f, 0.0f, 0.5f, 0.5f, 0.0f
+		0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+		0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f
 	};
 
 	unsigned int indices[] = {
@@ -82,7 +85,7 @@ int main()
 																			   // GL_DYNAMIC_DRAW = Data will likely change a lot
 																			   // GL_STREAM_DRAW = Data will change every time it is drawn
 
-		unsigned int EBO; // Element Buffer Object
+	unsigned int EBO; // Element Buffer Object
 					  // Stores vertex indices
 
 	glGenBuffers(1, &EBO);						// Generates a buffer ID to this object
@@ -94,20 +97,102 @@ int main()
 						  3,							// Size of the vertex attribute -> vec3
 						  GL_FLOAT,						// Type of data -> float
 						  GL_FALSE,						// Normlize data?
-						  6 * sizeof(float),			// Stride (Space between consecutive vertex attributes)
+						  8 * sizeof(float),			// Stride (Space between consecutive vertex attributes)
 						  (void*)0);					// Offset
 
 	glEnableVertexAttribArray(0); // Enables vertex attribute at specified location
 
 	// Tells OpenGL how to interpret the vertex color data
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	// Tells OpenGL how to interpret the vertex texture data
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	// Texture Sampling 1
+	unsigned int texture1;
+	glGenTextures(1, &texture1); // Generates texture data
+
+	glBindTexture(GL_TEXTURE_2D, texture1); // Binds texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	stbi_set_flip_vertically_on_load(true);
+
+	int textureWidth, textureHeight, colorChannels;
+	unsigned char *data = stbi_load("volt.jpg", &textureWidth, &textureHeight, &colorChannels, 0); // Reads texture from file
+	if (data)
+	{
+		// Generates texture from image
+		glTexImage2D(GL_TEXTURE_2D,		// Texture target
+			0,					// Mipmap level
+			GL_RGB,			// Format to store the texture
+			textureWidth,		// Width
+			textureHeight,		// Height
+			0,					// Should always be 0
+			GL_RGB,			// Format of the image
+			GL_UNSIGNED_BYTE,	// Data type of the image
+			data);				// Image data
+
+		glGenerateMipmap(GL_TEXTURE_2D); // Generate mipmaps for the texture
+	}
+	else
+	{
+		cout << "Failed to load texture" << endl;
+	}
+	stbi_image_free(data); // Deletes image data
+
+	// Texture Sampling 2
+	unsigned int texture2;
+	glGenTextures(1, &texture2);
+
+	glBindTexture(GL_TEXTURE_2D, texture2); // Binds texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	data = stbi_load("weed.jpg", &textureWidth, &textureHeight, &colorChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		cout << "Failed to load texture" << endl;
+	}
+	stbi_image_free(data);
+
+											// Texture Wrapping
+											// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+											//								  GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT
+											//								  GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE
+											// glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+											// Texture Filtering
+											// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+											// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+											// Mipmaping
+											// GL_NEAREST_MIPMAP_NEAREST - Nearest mipmap with nearest sampling
+											// GL_LINEAR_MIPMAP_NEAREST - Nearest mipmap with linear sampling
+											// GL_NEAREST_MIPMAP_LINEAR - Linear mipmap with nearest sampling
+											// GL_LINEAR_MIPMAP_LINEAR - Linear mipmap with linear sampling
+											// Mipmaping filtering should not be used on magnification filter !!!
+
+	// Unbinding
 	glBindVertexArray(0);						// Unbinds VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);			// Unbinds VBO
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	// Unbinds EBO
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Draws objects in wireframe
+
+	shader.use();
+	shader.setInt("texture2", 1);
 
 	// Render Loop
 	while (!glfwWindowShouldClose(window))
@@ -123,9 +208,11 @@ int main()
 		//float timeValue = glfwGetTime();
 		//float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		//int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor"); // Gets uniform variable location
-
-		shader.use();
-		//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f); // Sets uniform variable value
+		
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
 
 		glBindVertexArray(VAO);				// Binds VAO
 
