@@ -1,2 +1,6 @@
 ﻿  main.cpp
+c:\users\guilh\documents\learnopengl\learnopengl\object.h(25): warning C4018: '<': incompatibilidade de signed/unsigned
+c:\users\guilh\documents\learnopengl\learnopengl\object.h(32): warning C4018: '<': incompatibilidade de signed/unsigned
+c:\users\guilh\documents\learnopengl\learnopengl\main.cpp(80): warning C4244: 'argumento': conversão de 'const int' para 'float', possível perda de dados
+c:\users\guilh\documents\learnopengl\learnopengl\main.cpp(275): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
   LearnOpenGL.vcxproj -> C:\Users\guilh\Documents\LearnOpenGL\Debug\LearnOpenGL.exe

@@ -1,20 +1,15 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
-#include <glad\glad.h>
-#include <GLFW\glfw3.h>
-#include <iostream>
 #include "Shader.h"
+#include "Object.h"
+#include "Camera.h"
 
 using namespace std;
+using namespace glm;
 
-// Callback function called everytime the window is resized
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	// OpenGL Viewport
-	glViewport(0, 0, width, height); // X and Y of the lower left corner of the viewport, then Width and Height
-	// Note: OpenGL renders from coordinates -1 to 1, then translates those coordinates to the viewport's dimension
-}
+const int width = 800;
+const int height = 600;
+GLFWwindow* window;
 
 // Input Function
 void processInput(GLFWwindow* window)
@@ -26,6 +21,14 @@ void processInput(GLFWwindow* window)
 	}
 }
 
+// Callback function called everytime the window is resized
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	// OpenGL Viewport
+	glViewport(0, 0, width, height); // X and Y of the lower left corner of the viewport, then Width and Height
+									 // Note: OpenGL renders from coordinates -1 to 1, then translates those coordinates to the viewport's dimension
+}
+
 int main()
 {
 	// GLFW Window Initialization
@@ -35,7 +38,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Create Window Object
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL); // Create window with Width, Height and Name
+	GLFWwindow* window = glfwCreateWindow(width, height, "LearnOpenGL", NULL, NULL); // Create window with Width, Height and Name
 	if (window == NULL) // Error Handler
 	{
 		cout << "Failed to create GLFW window" << endl;
@@ -55,17 +58,89 @@ int main()
 
 	Shader shader("vertexShader.vs", "fragmentShader.fs");
 
+	// Depth Testing
+	glEnable(GL_DEPTH_TEST); // Enables depth testing (z-buffer)
+
+	// Ortographic Projection Matrix
+	glm::ortho(0.0f,	// Frustrum Left Coordinate
+			   800.0f,	// Frustrum Right Coordinate
+			   0.0f,	// Frustrum Bottom Coordinate
+			   600.0f,	// Frustrum Top Coordinate
+			   0.1f,	// Near Plane Distance
+			   100.0f);	// Far Plane Distance
+
+	// Perspective Projection Matrix
+	glm::perspective(glm::radians(45.0f),			// Field of View
+					 (float)width / (float)height,	// Aspect Ratio
+					 0.1f,							// Near Plane Distance
+					 100.0f);						// Far Plane Distance
+
+
+	Camera camera(vec3(0.0f, 0.0f, 6.0f));
+	camera.SetPerspectiveProjection(width, height, 0.1f, 100.0f, radians(45.0f));
+	//camera.SetOrthographicProjection(10, 10, 0.1f, 100.0f);
+
 	// Triangle Vertices
 	float vertices[] = {
-		0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
-		0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
 
 	unsigned int indices[] = {
 		0, 1, 3,
 		1, 2, 3
+	};
+
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
 	unsigned int VAO; // Vertex Array Object
@@ -97,24 +172,24 @@ int main()
 						  3,							// Size of the vertex attribute -> vec3
 						  GL_FLOAT,						// Type of data -> float
 						  GL_FALSE,						// Normlize data?
-						  8 * sizeof(float),			// Stride (Space between consecutive vertex attributes)
+						  5 * sizeof(float),			// Stride (Space between consecutive vertex attributes)
 						  (void*)0);					// Offset
 
 	glEnableVertexAttribArray(0); // Enables vertex attribute at specified location
 
 	// Tells OpenGL how to interpret the vertex color data
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	//glEnableVertexAttribArray(1);
 
 	// Tells OpenGL how to interpret the vertex texture data
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	// Texture Sampling 1
-	unsigned int texture1;
-	glGenTextures(1, &texture1); // Generates texture data
+	unsigned int texture;
+	glGenTextures(1, &texture); // Generates texture data
 
-	glBindTexture(GL_TEXTURE_2D, texture1); // Binds texture
+	glBindTexture(GL_TEXTURE_2D, texture); // Binds texture
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -144,28 +219,6 @@ int main()
 		cout << "Failed to load texture" << endl;
 	}
 	stbi_image_free(data); // Deletes image data
-
-	// Texture Sampling 2
-	unsigned int texture2;
-	glGenTextures(1, &texture2);
-
-	glBindTexture(GL_TEXTURE_2D, texture2); // Binds texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	data = stbi_load("weed.jpg", &textureWidth, &textureHeight, &colorChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		cout << "Failed to load texture" << endl;
-	}
-	stbi_image_free(data);
 
 											// Texture Wrapping
 											// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -203,26 +256,39 @@ int main()
 		// Background Color
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // Set background color
 		glClear(GL_COLOR_BUFFER_BIT);		  // Clear color buffer with selected background color
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear depth buffer
 
 		// Draw Stuff
 		//float timeValue = glfwGetTime();
 		//float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 		//int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor"); // Gets uniform variable location
-		
+
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture2);
+		glBindTexture(GL_TEXTURE_2D, texture);
 
 		glBindVertexArray(VAO);				// Binds VAO
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);	// Drawing function (with EBO)
+		for (int i = 0; i < 10; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = (20.0f * i) + (glfwGetTime() * 10);
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+			shader.setMat4("modelMatrix", model);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		shader.setMat4("viewMatrix", camera.GetViewMatrix());
+		shader.setMat4("projectionMatrix", camera.GetProjectionMatrix());
+
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);	// Drawing function (with EBO)
 																// First Argument = Type of OpenGL drawing primitive
 																// Second Argument = Number of indices total
 																// Third Argument = Indices variable type
 																// Fourth Argument = Offset
 
-		//glDrawArrays(GL_TRIANGLES, 0, 3);	// Drawing function (without EBO)
+		//glDrawArrays(GL_TRIANGLES, 0, 36);	// Drawing function (without EBO)
 		//									// First Argument = Type of OpenGL drawing primitive
 		//									// Second Argument = Starting index of the vertex array
 		//									// Third Argument = How many vertices should be drawn
